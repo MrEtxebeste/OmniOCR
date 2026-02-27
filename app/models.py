@@ -1,32 +1,81 @@
 from .extensions import db
 from datetime import datetime
+from flask_login import UserMixin # Añade esto
+from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash # Añade esto
 
-class User(db.Model):
+class User(UserMixin, db.Model): # Añade UserMixin aquí
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
 
-class Document(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    doc_type = db.Column(db.String(20), nullable=False)  # factura, albaran, presupuesto
-    filename = db.Column(db.String(255))
-    supplier_name = db.Column(db.String(255))
-    doc_date = db.Column(db.DateTime)
-    total_base = db.Column(db.Float, default=0.0)
-    total_tax = db.Column(db.Float, default=0.0)
-    total_amount = db.Column(db.Float, default=0.0)
-    status = db.Column(db.String(20), default='pending') # pending, validated, synced
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relación con las líneas (1 documento -> N líneas)
-    lines = db.relationship('DocumentLine', backref='document', lazy=True, cascade="all, delete-orphan")
+    # Método para cifrar la contraseña al crear el usuario
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
 
-class DocumentLine(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    document_id = db.Column(db.Integer, db.ForeignKey('document.id'), nullable=False)
-    description = db.Column(db.String(255))
-    quantity = db.Column(db.Float, default=1.0)
-    price_unit = db.Column(db.Float, default=0.0)
-    tax_rate = db.Column(db.Float, default=21.0) # IVA por defecto
-    total_line = db.Column(db.Float, default=0.0)
+    # Método para verificar la contraseña al hacer login
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+class Presupuesto(db.Model):
+    __tablename__ = 'nspresupuestos'  # Nombre exacto de tu tabla en MariaDB
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    session = db.Column(db.String(25))
+    idempresa = db.Column(db.String(25))
+    tipodocumento = db.Column(db.String(25))
+    numdocumento = db.Column(db.String(50))
+    fechadocumento = db.Column(db.String(10))
+    fechavalidez = db.Column(db.String(10))
+    emisor = db.Column(db.String(255))
+    naturaleza = db.Column(db.String(15), default='MAT')
+    numpedidocliente = db.Column(db.String(50))
+    numpedidoproveedor = db.Column(db.String(50))
+    cifemisor = db.Column(db.String(25))
+    estado = db.Column(db.Integer, default=10)
+    codigoproveedorbc = db.Column(db.String(50))
+    codigoproyectobc = db.Column(db.String(50))
+    numalbaran = db.Column(db.String(50), nullable=True)
+    importebruto = db.Column(db.Float(10, 2), default=0.00)
+    importeiva = db.Column(db.Float(10, 2), default=0.00)
+    importeneto = db.Column(db.Float(10, 2), default=0.00)
+    porcentajeiva = db.Column(db.Float(10, 2), default=21.00)
+    pdf = db.Column(db.LargeBinary, nullable=True) # Para el Longblob
+    data = db.Column(db.Text) # El JSON completo de la IA
+    hash = db.Column(db.String(32))
+    tiempoproceso = db.Column(db.Integer)
+    tokensentrada = db.Column(db.Integer)
+    tokenssalida = db.Column(db.Integer)
+    tokensinterno = db.Column(db.Integer)
+    tokenstotal = db.Column(db.Integer)
+    usuariocreacion = db.Column(db.String(25))
+    auditcreacion = db.Column(db.String(19))
+    usuariomodificacion = db.Column(db.String(25))
+    auditmodificacion = db.Column(db.String(19))
+    search = db.Column(db.Text)
+
+
+class PresupuestoLinea(db.Model):
+    __tablename__ = 'nspresupuestoslineas'
+
+    ir = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    idempresa = db.Column(db.String(25))
+    tipodocumento = db.Column(db.String(25))
+    numdocumento = db.Column(db.String(50)) # Relación con la cabecera
+    numlinea = db.Column(db.Integer)
+    articulobc = db.Column(db.String(50))
+    codigoproyectobc_line = db.Column(db.String(50), nullable=True)
+    naturaleza = db.Column(db.String(10), nullable=True)
+    referencia = db.Column(db.String(50))
+    descripcion = db.Column(db.String(500))
+    unidades = db.Column(db.Numeric(10, 2))
+    preciounitario = db.Column(db.Numeric(12, 6))
+    preciototal = db.Column(db.Numeric(10, 2))
+    descuento = db.Column(db.Numeric(10, 2), default=0.00)
+    procesado = db.Column(db.Boolean, default=False)
+    usuariocreacion = db.Column(db.String(25))
+    auditcreacion = db.Column(db.String(19))
+    usuariomodificacion = db.Column(db.String(25))
+    auditmodificacion = db.Column(db.String(19))
+    search = db.Column(db.Text)
