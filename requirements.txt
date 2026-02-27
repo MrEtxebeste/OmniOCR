@@ -1,0 +1,38 @@
+# ==========================================
+# CORE DE LA APLICACIÓN WEB
+# ==========================================
+Flask
+gunicorn
+
+# ==========================================
+# BASE DE DATOS Y ORM (MariaDB)
+# ==========================================
+Flask-SQLAlchemy
+Flask-Migrate
+PyMySQL
+cryptography
+
+# ==========================================
+# AUTENTICACIÓN Y SEGURIDAD
+# ==========================================
+Flask-Login
+Flask-WTF
+email-validator
+
+# ==========================================
+# VARIABLES DE ENTORNO Y CONFIGURACIÓN
+# ==========================================
+python-dotenv
+
+# ==========================================
+# ABSTRACCIÓN DE IA Y CONECTIVIDAD EXTERNA
+# ==========================================
+openai
+google-generativeai
+requests
+
+# ==========================================
+# MANEJO DE ARCHIVOS (PDF Y OCR)
+# ==========================================
+Pillow
+pdf2image
