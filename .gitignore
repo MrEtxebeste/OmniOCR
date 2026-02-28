@@ -1,3 +1,18 @@
-venv/
 
+# Entornos virtuales
+venv/
+env/
+
+# Archivos compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Variables de entorno (¡MUY IMPORTANTE!)
 .env
+
+# Base de datos local (si usas SQLite alguna vez)
+*.db
+
+# Carpeta de subidas de archivos (no queremos subir los PDF reales a Git)
+uploads/

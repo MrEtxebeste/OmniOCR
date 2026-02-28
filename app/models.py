@@ -55,15 +55,19 @@ class Presupuesto(db.Model):
     auditmodificacion = db.Column(db.String(19))
     search = db.Column(db.Text)
 
+# Añadir al final de app/models.py
 
 class PresupuestoLinea(db.Model):
     __tablename__ = 'nspresupuestoslineas'
 
-    ir = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    # En SQLAlchemy necesitamos definir la clave primaria. 
+    # Como 'ir' es el ID de la cabecera, usamos una clave compuesta (ir + numlinea)
+    ir = db.Column(db.Integer, primary_key=True) 
+    numlinea = db.Column(db.Integer, primary_key=True)
+    
     idempresa = db.Column(db.String(25))
     tipodocumento = db.Column(db.String(25))
-    numdocumento = db.Column(db.String(50)) # Relación con la cabecera
-    numlinea = db.Column(db.Integer)
+    numdocumento = db.Column(db.String(50))
     articulobc = db.Column(db.String(50))
     codigoproyectobc_line = db.Column(db.String(50), nullable=True)
     naturaleza = db.Column(db.String(10), nullable=True)
@@ -74,8 +78,24 @@ class PresupuestoLinea(db.Model):
     preciototal = db.Column(db.Numeric(10, 2))
     descuento = db.Column(db.Numeric(10, 2), default=0.00)
     procesado = db.Column(db.Boolean, default=False)
+    
     usuariocreacion = db.Column(db.String(25))
     auditcreacion = db.Column(db.String(19))
     usuariomodificacion = db.Column(db.String(25))
     auditmodificacion = db.Column(db.String(19))
     search = db.Column(db.Text)
+
+class PresupuestoValidacion(db.Model):
+    __tablename__ = 'nspresupuestosvalidaciones'
+
+    ir = db.Column(db.Integer, primary_key=True)
+    numvalidacion = db.Column(db.Integer, primary_key=True)
+    
+    idempresa = db.Column(db.String(25))
+    tipodocumento = db.Column(db.String(25))
+    numdocumento = db.Column(db.String(50))
+    numlinea = db.Column(db.Integer)
+    variable = db.Column(db.String(50))
+    errordescripcion = db.Column(db.Text)
+    error = db.Column(db.Integer)
+    active = db.Column(db.Integer, default=1)
