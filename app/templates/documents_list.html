@@ -3,31 +3,21 @@
 {% block title %}{{ title }} - OmniOCR{% endblock %}
 
 {% block content %}
-<div class="row">
+<div class="row mt-4">
     <div class="col-lg-3 col-md-4 mb-3">
         <div class="card shadow-sm h-100 border-0">
-            <div class="card-header bg-light">
-                <i class="fa-solid fa-file-pdf text-danger"></i> Visor Documento
-            </div>
-            <div class="card-body d-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-muted" style="min-height: 600px;">
-                <p class="text-center">Selecciona un documento<br>para previsualizarlo</p>
+            <div class="card-header bg-light"><i class="fa-solid fa-file-pdf text-danger"></i> Visor</div>
+            <div class="card-body d-flex align-items-center justify-content-center bg-secondary bg-opacity-10 text-muted" style="min-height: 500px;">
+                <p class="text-center small">Selecciona un documento para ver detalles</p>
             </div>
         </div>
     </div>
 
     <div class="col-lg-9 col-md-8">
-        <div class="clsFormToolbar d-flex align-items-center justify-content-between sticky-top">
+        <div class="d-flex align-items-center justify-content-between mb-3">
             <h2 class="m-0 text-capitalize">{{ title }}</h2>
             <div class="d-flex gap-2">
-                <a href="{{ url_for('auth.dashboard') }}" class="btn btn-primary" title="Subir Nuevo">
-                    <i class="fa-solid fa-plus"></i> Nuevo
-                </a>
-                <button class="btn btn-outline-secondary" title="Buscar">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                </button>
-                <button class="btn btn-outline-success" title="Exportar a Excel">
-                    <i class="fa-solid fa-file-excel"></i>
-                </button>
+                <a href="{{ url_for('auth.dashboard') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Nuevo</a>
             </div>
         </div>
 
@@ -39,11 +29,8 @@
                             <th>Nº Documento</th>
                             <th>Emisor</th>
                             <th>Fecha</th>
-                            <th class="text-end">Base</th>
-                            <th class="text-end">IVA</th>
                             <th class="text-end">Total</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
+                            <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -51,109 +38,17 @@
                         <tr style="cursor: pointer;" onclick="window.location.href='{{ url_for('auth.view_document', type=doc_type, doc_id=doc.id) }}'">
                             <td class="fw-bold">{{ doc.numdocumento }}</td>
                             <td>{{ doc.emisor }}</td>
-                            ```
-
-### Paso 2: Crear la pantalla de Detalle (`document_detail.html`)
-Crea un nuevo archivo en la carpeta `app/templates/` llamado **`document_detail.html`**. Aquí dibujaremos la cabecera, las alertas de la IA y la tabla con todas las líneas que ha extraído.
-
-Pega este código dentro:
-
-```html
-{% extends "base.html" %}
-
-{% block title %}Detalle {{ doc_type | capitalize }} - {{ document.numdocumento }}{% endblock %}
-
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
-    <h2 class="m-0"><i class="fa-solid fa-file-invoice text-primary me-2"></i>{{ doc_type | capitalize }}: {{ document.numdocumento }}</h2>
-    <a href="{{ url_for('auth.list_documents', type=doc_type) }}" class="btn btn-outline-secondary">
-        <i class="fa-solid fa-arrow-left"></i> Volver al listado
-    </a>
-</div>
-
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-light fw-bold text-uppercase text-muted">
-                Datos Principales
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 mb-2">
-                        <small class="text-muted d-block">Emisor</small>
-                        <strong>{{ document.emisor }}</strong>
-                    </div>
-                    <div class="col-md-2 mb-2">
-                        <small class="text-muted d-block">CIF/NIF</small>
-                        <strong>{{ document.cifemisor }}</strong>
-                    </div>
-                    <div class="col-md-2 mb-2">
-                        <small class="text-muted d-block">Fecha Documento</small>
-                        <strong>{{ document.fechadocumento }}</strong>
-                    </div>
-                    <div class="col-md-5 text-end bg-light p-2 rounded">
-                        <div class="d-flex justify-content-end gap-4">
-                            <div><small class="text-muted d-block">Base Imp.</small><span>{{ "%.2f"|format(document.importebruto|float) }}€</span></div>
-                            <div><small class="text-muted d-block">IVA ({{ document.porcentajeiva|int }}%)</small><span>{{ "%.2f"|format(document.importeiva|float) }}€</span></div>
-                            <div><small class="text-primary fw-bold d-block">Total Neto</small><strong class="text-primary fs-5">{{ "%.2f"|format(document.importeneto|float) }}€</strong></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {% if validaciones %}
-        <div class="mb-4">
-            <h5 class="text-danger"><i class="fa-solid fa-triangle-exclamation me-1"></i> Avisos de la IA</h5>
-            {% for val in validaciones %}
-                <div class="alert {% if val.error == 1 %}alert-danger{% else %}alert-warning{% endif %} py-2 shadow-sm border-0 mb-2">
-                    <span class="badge bg-dark me-2">
-                        {% if val.numlinea == 0 %}Cabecera{% else %}Línea {{ val.numlinea }}{% endif %}
-                    </span>
-                    <strong>({{ val.variable }}):</strong> {{ val.errordescripcion }}
-                </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-light fw-bold text-uppercase text-muted">
-                Líneas del Documento
-            </div>
-            <div class="card-body p-0 table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-dark">
-                        <tr>
-                            <th class="text-center" style="width: 5%">#</th>
-                            <th style="width: 15%">Referencia</th>
-                            <th style="width: 40%">Descripción</th>
-                            <th class="text-end" style="width: 10%">Uds.</th>
-                            <th class="text-end" style="width: 10%">Precio U.</th>
-                            <th class="text-end" style="width: 10%">Dto. %</th>
-                            <th class="text-end" style="width: 10%">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for linea in lines %}
-                        <tr>
-                            <td class="text-center fw-bold text-muted">{{ linea.numlinea }}</td>
-                            <td><span class="badge bg-secondary">{{ linea.referencia }}</span></td>
-                            <td>{{ linea.descripcion }}</td>
-                            <td class="text-end">{{ linea.unidades }}</td>
-                            <td class="text-end">{{ "%.2f"|format(linea.preciounitario|float) if linea.preciounitario else '0.00' }}€</td>
-                            <td class="text-end text-danger">{{ linea.descuento }}%</td>
-                            <td class="text-end fw-bold">{{ "%.2f"|format(linea.preciototal|float) if linea.preciototal else '0.00' }}€</td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">No hay líneas registradas para este documento.</td>
+                            <td>{{ doc.fechadocumento }}</td>
+                            <td class="text-end fw-bold text-primary">{{ "%.2f"|format(doc.importeneto|float) }}€</td>
+                            <td class="text-center">
+                                <i class="fa-solid fa-chevron-right text-muted"></i>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-
     </div>
 </div>
 {% endblock %}

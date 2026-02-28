@@ -8,8 +8,12 @@ from werkzeug.utils import secure_filename
 from ..models import User, Presupuesto, PresupuestoLinea, PresupuestoValidacion
 from ..extensions import db
 from app.services.ai_provider.factory import AIFactory
+from markupsafe import Markup
 
 auth_bp = Blueprint('auth', __name__)
+@auth_bp.route('/', methods=['GET'])
+def index():
+    return redirect(url_for('auth.login'))
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -131,8 +135,13 @@ def dashboard():
                         db.session.add(nueva_validacion)
 
                     # -- D. CONFIRMAR TODO JUNTO (Transacción Atómica) --
-                    db.session.commit()
-                    flash(f'¡Éxito! Presupuesto {nuevo_presu.numdocumento} guardado con sus líneas y validaciones.')
+                    # Generamos la URL de la vista detalle
+                    url_detalle = url_for('auth.view_document', type=doc_type, doc_id=header_id)
+                    
+                    # Creamos el mensaje en formato HTML seguro
+                    mensaje = Markup(f"¡Éxito! Presupuesto <strong>{nuevo_presu.numdocumento}</strong> guardado con sus líneas y validaciones. <a href='{url_detalle}' class='alert-link text-decoration-underline ms-2'>Ver documento <i class='fa-solid fa-arrow-right'></i></a>")
+                    
+                    flash(mensaje)
                 
                 else:
                     flash(f'Archivo subido, pero la BD para el tipo {doc_type} aún no está configurada.')
@@ -180,3 +189,44 @@ def view_document(type, doc_id):
         return redirect(url_for('auth.list_documents', type=type))
 
     return render_template('document_detail.html', document=document, lines=lines, validaciones=validaciones, doc_type=type)
+
+@auth_bp.route('/document/update/<int:doc_id>', methods=['POST'])
+@login_required
+def update_document(doc_id):
+    try:
+        data = request.json
+        # 1. Actualizar Cabecera
+        doc = Presupuesto.query.get_or_404(doc_id)
+        doc.emisor = data['emisor']
+        doc.cifemisor = data['cifemisor']
+        doc.fechadocumento = data['fechadocumento']
+        doc.importebruto = data['importebruto']
+        doc.importeiva = data['importeiva']
+        doc.importeneto = data['importeneto']
+        doc.usuariomodificacion = current_user.username
+        doc.auditmodificacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # 2. Actualizar Líneas (Borramos las actuales y metemos las nuevas)
+        PresupuestoLinea.query.filter_by(ir=doc_id).delete()
+        
+        for i, l in enumerate(data['lines'], 1):
+            nueva_linea = PresupuestoLinea(
+                ir=doc_id,
+                numlinea=i,
+                idempresa=doc.idempresa,
+                tipodocumento=doc.tipodocumento,
+                numdocumento=doc.numdocumento,
+                referencia=l['referencia'],
+                descripcion=l['descripcion'],
+                unidades=l['unidades'],
+                preciounitario=l['preciounitario'],
+                preciototal=l['preciototal'],
+                descuento=l.get('descuento', 0)
+            )
+            db.session.add(nueva_linea)
+
+        db.session.commit()
+        return {"result": 1, "message": "Documento actualizado correctamente"}
+    except Exception as e:
+        db.session.rollback()
+        return {"result": 0, "error": str(e)}, 500
