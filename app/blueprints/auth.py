@@ -5,7 +5,8 @@ from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 
 # Importamos nuestros modelos, base de datos y fábrica de IA
-from ..models import User, Presupuesto, PresupuestoLinea, PresupuestoValidacion
+# Cambiamos los nombres viejos por los nuevos
+from ..models import User, Documento, Presupuesto, Albaran, DocumentoLinea
 from ..extensions import db
 from app.services.ai_provider.factory import AIFactory
 from markupsafe import Markup
@@ -99,7 +100,7 @@ def dashboard():
 
                     # -- B. CREAR LÍNEAS --
                     for linea in datos_cabecera.get('lines', []):
-                        nueva_linea = PresupuestoLinea(
+                        nueva_linea = DocumentoLinea(
                             ir=header_id,
                             idempresa=nuevo_presu.idempresa,
                             tipodocumento="PRESUPUESTO",
@@ -182,7 +183,7 @@ def view_document(type, doc_id):
         # Buscamos la cabecera por su ID
         document = Presupuesto.query.get_or_404(doc_id)
         # Buscamos todas las líneas que tengan el 'ir' igual al ID de la cabecera
-        lines = PresupuestoLinea.query.filter_by(ir=doc_id).order_by(PresupuestoLinea.numlinea).all()
+        lines = DocumentoLinea.query.filter_by(ir=doc_id).order_by(DocumentoLinea.numlinea).all()
         validaciones = PresupuestoValidacion.query.filter_by(ir=doc_id).all()
     else:
         flash(f"La vista detalle para {type} aún no está conectada.")
@@ -207,10 +208,10 @@ def update_document(doc_id):
         doc.auditmodificacion = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # 2. Actualizar Líneas (Borramos las actuales y metemos las nuevas)
-        PresupuestoLinea.query.filter_by(ir=doc_id).delete()
+        DocumentoLinea.query.filter_by(ir=doc_id).delete()
         
         for i, l in enumerate(data['lines'], 1):
-            nueva_linea = PresupuestoLinea(
+            nueva_linea = DocumentoLinea(
                 ir=doc_id,
                 numlinea=i,
                 idempresa=doc.idempresa,
@@ -230,3 +231,30 @@ def update_document(doc_id):
     except Exception as e:
         db.session.rollback()
         return {"result": 0, "error": str(e)}, 500
+    
+@auth_bp.route('/document/validate-erp/<int:doc_id>', methods=['POST'])
+@login_required
+def validate_erp(doc_id):
+    data = request.json
+    errors = []
+    
+    # SIMULACIÓN DE LÓGICA DE VALIDACIÓN CONTRA ERP
+    # 1. Validar Proveedor
+    cif = data.get('cifemisor')
+    # Aquí harías: proveedor = ERP_Service.get_proveedor_by_cif(cif)
+    if cif == "B12345678": # Ejemplo de fallo
+        errors.append(f"El CIF {cif} no está dado de alta como proveedor.")
+
+    # 2. Validar Referencias de Artículos
+    for line in data.get('lines', []):
+        ref = line.get('referencia')
+        # Aquí harías: articulo = ERP_Service.get_articulo(ref)
+        if not ref: # Ejemplo: referencia vacía
+            errors.append("Hay una línea sin referencia de artículo.")
+        elif "ERROR" in ref: # Simulación de referencia inexistente
+            errors.append(f"La referencia '{ref}' no existe en el maestro de artículos.")
+
+    if errors:
+        return {"success": False, "errors": errors}, 200
+    
+    return {"success": True, "message": "Todo correcto"}, 200

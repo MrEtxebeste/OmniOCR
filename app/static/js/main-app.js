@@ -96,3 +96,49 @@ async function guardarCambios(docId) {
         alert("Fallo en la conexión con el servidor");
     }
 }
+
+async function validarContraERP(docId) {
+    const btn = document.getElementById('btnValidarERP');
+    const originalHTML = btn.innerHTML;
+    
+    // 1. Estado de carga
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Consultando ERP...';
+
+    // 2. Recolectamos los datos actuales de la pantalla (como en guardarCambios)
+    const currentData = {
+        cifemisor: document.getElementById('cifemisor').value,
+        lines: []
+    };
+    document.querySelectorAll('.clsLine').forEach(tr => {
+        currentData.lines.push({
+            referencia: tr.querySelector('.clsRef').innerText,
+            preciounitario: parseFloat(tr.querySelector('.clsPrec').innerText)
+        });
+    });
+
+    try {
+        const response = await fetch(`/document/validate-erp/${docId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(currentData)
+        });
+
+        const result = await response.json();
+        
+        // 3. Procesar resultados del ERP
+        if (result.success) {
+            alert("✅ Verificación exitosa: El proveedor y todos los artículos existen en el ERP.");
+        } else {
+            // Aquí podrías incluso resaltar en rojo las líneas que fallan
+            let msg = "❌ Errores encontrados en el ERP:\n";
+            result.errors.forEach(err => msg += `- ${err}\n`);
+            alert(msg);
+        }
+    } catch (error) {
+        alert("Error de conexión con el servicio de validación.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
+}
