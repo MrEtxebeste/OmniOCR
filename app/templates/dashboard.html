@@ -1,50 +1,36 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - OmniOCR{% endblock %}
+{% block title %}Subir Documento - OmniOCR{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-12 mb-4">
-        <h2>Panel de Control</h2>
-        <p class="text-muted">Sube un documento para comenzar el procesamiento inteligente.</p>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h5 class="card-title mb-0"><i class="bi bi-upload"></i> Subir Documento</h5>
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow border-0">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h4 class="mb-0"><i class="fa-solid fa-robot me-2"></i> Procesamiento Inteligente</h4>
             </div>
-            <div class="card-body">
-                <form action="#" method="POST" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label class="form-label">Tipo de documento</label>
-                        <select name="doc_type" class="form-select" required>
-                            <option value="factura">Factura</option>
-                            <option value="albaran">Albarán</option>
+            <div class="card-body p-4">
+                <p class="text-muted text-center mb-4">Sube tu documento y Gemini extraerá automáticamente todos los datos y líneas.</p>
+                
+                <form action="{{ url_for('auth.dashboard') }}" method="POST" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">1. Selecciona el tipo de documento</label>
+                        <select name="doc_type" class="form-select form-select-lg" required>
                             <option value="presupuesto">Presupuesto</option>
+                            <option value="albaran">Albarán</option>
+                            <option value="factura">Factura</option>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Archivo (PDF, JPG, PNG)</label>
-                        <input type="file" name="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">2. Archivo a procesar (PDF o Imagen)</label>
+                        <input type="file" name="file" class="form-control form-control-lg" accept=".pdf,.jpg,.jpeg,.png" required>
                     </div>
-                    <button type="submit" class="btn btn-success w-100">
-                        Procesar con IA
+
+                    <button type="submit" class="btn btn-success btn-lg w-100" onclick="this.innerHTML='<i class=\'fa-solid fa-spinner fa-spin\'></i> Procesando...'; this.classList.add('disabled');">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Extraer Datos con IA
                     </button>
                 </form>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Últimos Procesados</h5>
-            </div>
-            <div class="card-body">
-                <p class="text-center text-muted">Aún no hay documentos procesados.</p>
             </div>
         </div>
     </div>

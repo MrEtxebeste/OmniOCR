@@ -16,6 +16,31 @@ from ..extensions import db
 
 auth_bp = Blueprint('auth', __name__)
 
+# Añade esto al final de app/blueprints/auth.py
+
+@auth_bp.route('/documents/<type>')
+@login_required
+def list_documents(type):
+    valid_types = ['factura', 'albaran', 'presupuesto']
+    
+    if type not in valid_types:
+        flash("Tipo de documento no válido")
+        return redirect(url_for('auth.dashboard'))
+    
+    docs = []
+    
+    # Por ahora solo leemos de la base de datos si es presupuesto
+    # (Ya que es la tabla 'nspresupuestos' que hemos mapeado)
+    if type == 'presupuesto':
+        docs = Presupuesto.query.order_by(Presupuesto.auditcreacion.desc()).all()
+    else:
+        # Mensaje temporal hasta que mapeemos nsfacturas y nsalbaranes
+        flash(f"La tabla para {type} aún no está conectada a Flask.")
+    
+    title = type.capitalize() + "s"
+    
+    return render_template('documents_list.html', documents=docs, title=title, doc_type=type)
+
 # En app/blueprints/auth.py
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
